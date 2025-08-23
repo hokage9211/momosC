@@ -27,6 +27,7 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.get('/api/health', (req, res) => {
+    console.log("Health pinge ran");
   res.status(200).send('OKkk running');
 });
 
@@ -50,4 +51,5 @@ app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`))
 //         toast.textContent = message;
 //         toast.style.display = "block";
 //         setTimeout(() => (toast.style.display = "none"), 3000);
+
 //       }
