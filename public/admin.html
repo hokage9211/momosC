@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Billing App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+    }
+    .summary-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 30%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .summary-box h2 {
+      margin-bottom: 10px;
+      font-size: 18px;
+      color: #444;
+    }
+    .summary-box p {
+      font-size: 24px;
+      font-weight: bold;
+      color: #222;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+      font-size: 14px;
+    }
+    tr.paid {
+      background-color: #e7ffe7;
+    }
+    tr.unpaid {
+      background-color: #ffe7e7;
+    }
+    tr.deleted {
+      background-color: #fff7d4;
+    }
+    .btn {
+      padding: 6px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-toggle {
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #dc3545;
+      color: white;
+    }
+    .btn-undelete {
+      background-color: #ffc107;
+      color: black;
+    }
+    .item-details {
+      font-size: 13px;
+      color: #333;
+    }
+    #toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: #333;
+        color: #fff;
+        border-radius: 5px;
+        display: none;
+        z-index: 1000;
+      }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel - Today's Bills</h1>
+  <button onclick="window.location.href='admin-archive.html'" style="position: fixed; top: 20px; right: 20px; padding: 10px; z-index: 1000;">
+  Go to Archived Bills
+</button>
+    <div id="toast"></div>
+
+
+  <div class="summary">
+    <div class="summary-box">
+      <h2>Total Sales</h2>
+      <p id="totalSales">₹0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Unpaid Bills</h2>
+      <p id="unpaidStats">0 | ₹0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Deleted Bills</h2>
+      <p id="deletedCount">0</p>
+    </div>
+  </div>
+
+  <table id="billsTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Total</th>
+        <th>Items</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+ 
+  <script>
+     function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.style.display = "block";
+        setTimeout(() => (toast.style.display = "none"), 3000);
+      }
+  // Redirect to login if no token
+  const token = localStorage.getItem('token');
+  // if (!token) window.location.href = 'login.html';
+if (!token) {
+  // Redirect to login with the intended redirect path
+  const currentPath = window.location.pathname;
+  window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+  showToast("Authentication Required lodu")
+}
+
+
+  // Wrap fetch to include token
+  const originalFetch = window.fetch;
+  window.fetch = (url, options = {}) => {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + token;
+    return originalFetch(url, options);
+  };
+
+
+
+
+    async function fetchBills() {
+      try {
+        const res = await fetch('/api/admin/bills/today', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+        const data = await res.json();
+        // console.log(data)
+
+        const tbody = document.querySelector('#billsTable tbody');
+        tbody.innerHTML = '';
+
+        const { bills, summary } = data;
+
+        document.getElementById('totalSales').textContent = '₹' + summary.totalSales;
+        document.getElementById('unpaidStats').textContent = `${summary.unpaidCount} | ₹${summary.unpaidAmount}`;
+        document.getElementById('deletedCount').textContent = summary.deletedCount;
+
+        bills.forEach(bill => {
+          const tr = document.createElement('tr');
+
+          if (bill.deleted) tr.className = 'deleted';
+          else if (bill.payment === 'Paid') tr.className = 'paid';
+          else tr.className = 'unpaid';
+
+          const time = new Date(bill.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const modifiedTime = new Date(bill.updatedAt).toLocaleString('en-IN', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric'
+});
+
+          const itemList = bill.items.map(item =>
+            `<div class="item-details">${item.name} x ${item.quantity} = ₹${item.price * item.quantity}</div>`
+          ).join('');
+
+          tr.innerHTML = `
+            // <td>${time}</td>
+            <td>
+  ${time}<br>
+  <span style="font-size: 12px; color: gray;">Modified: ${modifiedTime}</span>
+</td>
+            <td>${bill.payment}${bill.deleted ? ` (Deleted by ${bill.deletedBy})` : ''}</td>
+            <td>₹${bill.total}</td>
+            <td>${itemList}</td>
+            <td>
+              <button class="btn btn-toggle" onclick="togglePayment('${bill._id}')">Toggle</button>
+              ${bill.deleted
+                ? `<button class="btn btn-undelete" onclick="undeleteBill('${bill._id}')">Undelete</button>`
+                : `<button class="btn btn-delete" onclick="deleteBill('${bill._id}')">Delete</button>`}
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+          // showToast("success")
+        });
+        showToast("Loaded success")
+
+      } catch (err) {
+
+        showToast('Error loading bills');
+      }
+    }
+
+    async function togglePayment(id) {
+      await fetch(`/api/admin/bills/${id}/toggle`, { method: 'PATCH' });
+      fetchBills();
+    }
+
+    async function deleteBill(id) {
+      await fetch(`/api/admin/bills/${id}/delete`, { method: 'PATCH' });
+      fetchBills();
+    }
+
+    async function undeleteBill(id) {
+      await fetch(`/api/admin/bills/${id}/undelete`, { method: 'PATCH' });
+      fetchBills();
+    }
+
+    fetchBills();
+  </script>
+</body>
+</html>
