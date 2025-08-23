@@ -76,7 +76,7 @@ async function archiveTodayBillsAndSendReport() {
 }
 
 // Schedule cron for 11:59 PM every day
-cron.schedule('19 12 * * *', () => {
+cron.schedule('11 13 * * *', () => {
     console.log('Running daily sales cron job...');
     archiveTodayBillsAndSendReport();
 },{
@@ -86,3 +86,4 @@ cron.schedule('19 12 * * *', () => {
 
 // Expose manual trigger
 module.exports = { archiveTodayBillsAndSendReport };
+
