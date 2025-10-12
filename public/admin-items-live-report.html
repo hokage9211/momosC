@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Today's Item-wise Sales Report - Admin</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .navigation {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .nav-btn {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .nav-btn:hover {
+      background: #0056b3;
+    }
+    .nav-btn.active {
+      background: #6c757d;
+    }
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .controls button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .controls button:hover {
+      background: #218838;
+    }
+    .last-updated {
+      text-align: center;
+      color: #666;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+      gap: 20px;
+    }
+    .summary-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      flex: 1;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .summary-box h2 {
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #555;
+    }
+    .summary-box p {
+      font-size: 24px;
+      font-weight: bold;
+      color: #222;
+      margin: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #333;
+    }
+    tr:hover {
+      background: #f8f9fa;
+    }
+    .total-row {
+      background: #d4edda !important;
+      font-weight: bold;
+    }
+    .category-section {
+      margin-bottom: 30px;
+    }
+    .category-title {
+      background: #007bff;
+      color: white;
+      padding: 10px 15px;
+      margin: 20px 0 10px 0;
+      border-radius: 5px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-style: italic;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .export-btn {
+      background: #17a2b8;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .export-btn:hover {
+      background: #138496;
+    }
+    .auto-refresh {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 20px;
+    }
+    .auto-refresh label {
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Today's Live Item Sales Report</h1>
+
+  <div class="navigation">
+    <button class="nav-btn" onclick="window.location.href='admin.html'">📋 Live Bills</button>
+    <button class="nav-btn" onclick="window.location.href='admin-archive.html'">📁 Archived Bills</button>
+    <button class="nav-btn" onclick="window.location.href='admin-items-report.html'">📈 Archived Item Report</button>
+    <button class="nav-btn active" onclick="window.location.href='admin-items-live-report.html'">🔥 Live Item Report</button>
+  </div>
+
+  <div class="controls">
+    <button onclick="loadLiveItemReport()">🔄 Refresh Report</button>
+    <button class="export-btn" onclick="exportToCSV()">📥 Export CSV</button>
+    <div class="auto-refresh">
+      <label>
+        <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+        Auto-refresh every 30 seconds
+      </label>
+    </div>
+  </div>
+
+  <div class="last-updated" id="lastUpdated">
+    Last updated: Not loaded yet
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <h2>Total Items Sold Today</h2>
+      <p id="totalItems">0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Today's Revenue</h2>
+      <p id="totalRevenue">₹0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Unique Items Sold</h2>
+      <p id="uniqueItems">0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Total Bills Today</h2>
+      <p id="totalBills">0</p>
+    </div>
+  </div>
+
+  <div id="reportContent">
+    <div class="no-data">Click "Refresh Report" to load today's item sales data</div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const currentPath = window.location.pathname;
+      window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+    }
+
+    let autoRefreshInterval = null;
+
+    async function loadLiveItemReport() {
+      try {
+        const res = await fetch('/api/admin/items-live-report', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch live report data');
+        }
+
+        const reportData = await res.json();
+        displayLiveItemReport(reportData);
+        
+        // Update last updated time
+        document.getElementById('lastUpdated').textContent = 
+          `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
+        
+      } catch (error) {
+        console.error('Error loading live report:', error);
+        alert('Error loading live report data. Please try again.');
+      }
+    }
+
+    function displayLiveItemReport(reportData) {
+      const reportContent = document.getElementById('reportContent');
+      
+      if (!reportData || !reportData.items || Object.keys(reportData.items).length === 0) {
+        reportContent.innerHTML = '<div class="no-data">No sales data found for today</div>';
+        
+        // Reset summary
+        document.getElementById('totalItems').textContent = '0';
+        document.getElementById('totalRevenue').textContent = '₹0';
+        document.getElementById('uniqueItems').textContent = '0';
+        document.getElementById('totalBills').textContent = '0';
+        return;
+      }
+
+      // Update summary
+      document.getElementById('totalItems').textContent = reportData.summary.totalQuantity;
+      document.getElementById('totalRevenue').textContent = `₹${reportData.summary.totalRevenue}`;
+      document.getElementById('uniqueItems').textContent = reportData.summary.uniqueItems;
+      document.getElementById('totalBills').textContent = reportData.summary.totalBills;
+
+      // Group items by category
+      const categories = {};
+      Object.values(reportData.items).forEach(item => {
+        const category = item.category || 'Other';
+        if (!categories[category]) {
+          categories[category] = [];
+        }
+        categories[category].push(item);
+      });
+
+      let html = '';
+
+      // Sort categories by total revenue (descending)
+      const sortedCategories = Object.keys(categories).sort((a, b) => {
+        const revenueA = categories[a].reduce((sum, item) => sum + item.totalRevenue, 0);
+        const revenueB = categories[b].reduce((sum, item) => sum + item.totalRevenue, 0);
+        return revenueB - revenueA;
+      });
+      
+      sortedCategories.forEach(category => {
+        const categoryItems = categories[category];
+        let categoryTotalQuantity = 0;
+        let categoryTotalRevenue = 0;
+
+        html += `<div class="category-section">`;
+        html += `<div class="category-title">${category}</div>`;
+        html += `<table>`;
+        html += `
+          <thead>
+            <tr>
+              <th>Item Name</th>
+              <th>Price</th>
+              <th>Quantity Sold</th>
+              <th>Total Revenue</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        // Sort items by revenue (descending)
+        categoryItems.sort((a, b) => b.totalRevenue - a.totalRevenue);
+        
+        categoryItems.forEach(item => {
+          categoryTotalQuantity += item.quantity;
+          categoryTotalRevenue += item.totalRevenue;
+          const percentage = ((item.totalRevenue / reportData.summary.totalRevenue) * 100).toFixed(1);
+
+          html += `
+            <tr>
+              <td>${item.name}</td>
+              <td>₹${item.price}</td>
+              <td>${item.quantity}</td>
+              <td>₹${item.totalRevenue}</td>
+              <td>${percentage}%</td>
+            </tr>
+          `;
+        });
+
+        // Category total row
+        const categoryPercentage = ((categoryTotalRevenue / reportData.summary.totalRevenue) * 100).toFixed(1);
+        html += `
+          <tr class="total-row">
+            <td><strong>${category} Total</strong></td>
+            <td></td>
+            <td><strong>${categoryTotalQuantity}</strong></td>
+            <td><strong>₹${categoryTotalRevenue}</strong></td>
+            <td><strong>${categoryPercentage}%</strong></td>
+          </tr>
+        `;
+
+        html += `</tbody></table></div>`;
+      });
+
+      reportContent.innerHTML = html;
+    }
+
+    function exportToCSV() {
+      const tables = document.querySelectorAll('table');
+      if (tables.length === 0) {
+        alert('No data to export. Please refresh the report first.');
+        return;
+      }
+
+      const today = new Date().toLocaleDateString('en-IN');
+      let csvContent = `Today's Item Sales Report - ${today}\n\n`;
+      csvContent += "Item Name,Price,Quantity Sold,Total Revenue,Percentage\n";
+      
+      tables.forEach(table => {
+        const rows = table.querySelectorAll('tr');
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td, th');
+          const rowData = Array.from(cells).map(cell => {
+            let text = cell.textContent.trim();
+            // Handle commas in CSV
+            if (text.includes(',')) {
+              text = `"${text}"`;
+            }
+            return text;
+          }).join(',');
+          csvContent += rowData + '\n';
+        });
+        csvContent += '\n'; // Add empty line between categories
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `live-item-sales-${today.replace(/\//g, '-')}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    function toggleAutoRefresh() {
+      const autoRefreshCheckbox = document.getElementById('autoRefresh');
+      
+      if (autoRefreshCheckbox.checked) {
+        // Start auto-refresh
+        autoRefreshInterval = setInterval(loadLiveItemReport, 30000); // 30 seconds
+        console.log('Auto-refresh enabled');
+      } else {
+        // Stop auto-refresh
+        if (autoRefreshInterval) {
+          clearInterval(autoRefreshInterval);
+          autoRefreshInterval = null;
+        }
+        console.log('Auto-refresh disabled');
+      }
+    }
+
+    // Load report when page loads
+    window.addEventListener('load', () => {
+      loadLiveItemReport();
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+      }
+    });
+  </script>
+</body>
+</html>

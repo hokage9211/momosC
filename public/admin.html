@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Billing App</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --radius: 8px;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      padding: 0;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      margin: 20px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .nav-btn.active {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .content {
+      padding: 32px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .summary-box {
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      transition: all 0.3s ease;
+    }
+
+    .summary-box:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .summary-box h2 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: var(--gray-700);
+      font-weight: 600;
+    }
+
+    .summary-box p {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .total-sales { background: linear-gradient(135deg, #dbeafe, #eff6ff); border-color: #bfdbfe; }
+    .unpaid-bills { background: linear-gradient(135deg, #fef3c7, #fffbeb); border-color: #fcd34d; }
+    .deleted-bills { background: linear-gradient(135deg, #fee2e2, #fef2f2); border-color: #fca5a5; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    th {
+      background: var(--gray-50);
+      font-weight: 600;
+      color: var(--gray-700);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: var(--gray-50);
+    }
+
+    .paid { background: #f0fdf4 !important; }
+    .unpaid { background: #fef2f2 !important; }
+    .deleted { background: #fffbeb !important; }
+
+    .btn {
+      padding: 8px 16px;
+      margin-right: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-toggle {
+      background: linear-gradient(135deg, var(--primary), #1d4ed8);
+      color: white;
+    }
+
+    .btn-delete {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: white;
+    }
+
+    .btn-undelete {
+      background: linear-gradient(135deg, var(--warning), #d97706);
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .item-details {
+      font-size: 13px;
+      color: var(--gray-700);
+      line-height: 1.4;
+    }
+
+    .item-detail {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .item-detail:last-child {
+      border-bottom: none;
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-paid { background: #dcfce7; color: #166534; }
+    .status-unpaid { background: #fee2e2; color: #991b1b; }
+    .status-deleted { background: #fef3c7; color: #92400e; }
+
+    .time-cell {
+      font-weight: 600;
+    }
+
+    .modified-time {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      background: var(--gray-900);
+      color: white;
+      border-radius: 12px;
+      display: none;
+      z-index: 1000;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--primary);
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 20px;
+      }
+      
+      .summary {
+        grid-template-columns: 1fr;
+      }
+      
+      table {
+        font-size: 14px;
+      }
+      
+      th, td {
+        padding: 12px 8px;
+      }
+      
+      .btn {
+        padding: 6px 12px;
+        margin-bottom: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 Admin Panel - Today's Bills</h1>
+      <div class="navigation">
+        <button class="nav-btn active" onclick="window.location.href='admin.html'">📋 Live Bills</button>
+        <button class="nav-btn" onclick="window.location.href='admin-archive.html'">📁 Archived Bills</button>
+        <button class="nav-btn" onclick="window.location.href='admin-items-report.html'">📊 Archived Item Report</button>
+        <button class="nav-btn" onclick="window.location.href='admin-items-live-report.html'">🔥 Live Item Report</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="summary">
+        <div class="summary-box total-sales">
+          <h2>Total Sales</h2>
+          <p id="totalSales">₹0</p>
+        </div>
+        <div class="summary-box unpaid-bills">
+          <h2>Unpaid Bills</h2>
+          <p id="unpaidStats">0 | ₹0</p>
+        </div>
+        <div class="summary-box deleted-bills">
+          <h2>Deleted Bills</h2>
+          <p id="deletedCount">0</p>
+        </div>
+      </div>
+
+      <table id="billsTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Items</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="5" class="no-data">Loading today's bills...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.style.display = "block";
+      setTimeout(() => (toast.style.display = "none"), 3000);
+    }
+
+    // Redirect to login if no token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const currentPath = window.location.pathname;
+      window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+      showToast("Authentication Required");
+    }
+
+    // Wrap fetch to include token
+    const originalFetch = window.fetch;
+    window.fetch = (url, options = {}) => {
+      options.headers = options.headers || {};
+      options.headers['Authorization'] = 'Bearer ' + token;
+      return originalFetch(url, options);
+    };
+
+    async function fetchBills() {
+      try {
+        const res = await fetch('/api/admin/bills/today', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await res.json();
+
+        const tbody = document.querySelector('#billsTable tbody');
+        tbody.innerHTML = '';
+
+        const { bills, summary } = data;
+
+        // Update summary
+        document.getElementById('totalSales').textContent = '₹' + summary.totalSales;
+        document.getElementById('unpaidStats').textContent = `${summary.unpaidCount} | ₹${summary.unpaidAmount}`;
+        document.getElementById('deletedCount').textContent = summary.deletedCount;
+
+        if (bills.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="no-data">No bills found for today</td>
+            </tr>
+          `;
+          return;
+        }
+
+        // Display bills
+        bills.forEach(bill => {
+          const tr = document.createElement('tr');
+
+          // Set row class based on status
+          if (bill.deleted) {
+            tr.className = 'deleted';
+          } else if (bill.payment === 'Paid') {
+            tr.className = 'paid';
+          } else {
+            tr.className = 'unpaid';
+          }
+
+          const time = new Date(bill.createdAt).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+          
+          const modifiedTime = new Date(bill.updatedAt).toLocaleString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          });
+
+          // Create items display
+          const itemList = bill.items.map(item =>
+            `<div class="item-detail">${item.name} × ${item.quantity} = ₹${item.price * item.quantity}</div>`
+          ).join('');
+
+          // Status display with badge
+          let statusDisplay = '';
+          if (bill.deleted) {
+            statusDisplay = `
+              <span class="status-badge status-deleted">Deleted</span>
+              <div style="font-size: 11px; color: var(--gray-500); margin-top: 4px;">
+                by ${bill.deletedBy}
+              </div>
+            `;
+          } else if (bill.payment === 'Paid') {
+            statusDisplay = `<span class="status-badge status-paid">Paid</span>`;
+          } else {
+            statusDisplay = `<span class="status-badge status-unpaid">Unpaid</span>`;
+          }
+
+          tr.innerHTML = `
+            <td class="time-cell">
+              ${time}
+              <div class="modified-time">Modified: ${modifiedTime}</div>
+            </td>
+            <td>${statusDisplay}</td>
+            <td><strong>₹${bill.total}</strong></td>
+            <td>
+              <div class="item-details">
+                ${itemList}
+              </div>
+            </td>
+            <td>
+              <button class="btn btn-toggle" onclick="togglePayment('${bill._id}')">
+                ${bill.payment === 'Paid' ? 'Mark Unpaid' : 'Mark Paid'}
+              </button>
+              ${bill.deleted
+                ? `<button class="btn btn-undelete" onclick="undeleteBill('${bill._id}')">Undelete</button>`
+                : `<button class="btn btn-delete" onclick="deleteBill('${bill._id}')">Delete</button>`}
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+
+        showToast("✅ Bills loaded successfully");
+
+      } catch (err) {
+        console.error('Error loading bills:', err);
+        showToast('❌ Error loading bills');
+      }
+    }
+
+    async function togglePayment(id) {
+      try {
+        await fetch(`/api/admin/bills/${id}/toggle`, { method: 'PATCH' });
+        showToast("🔄 Payment status updated");
+        fetchBills();
+      } catch (err) {
+        showToast('❌ Error updating payment');
+      }
+    }
+
+    async function deleteBill(id) {
+      try {
+        await fetch(`/api/admin/bills/${id}/delete`, { method: 'PATCH' });
+        showToast("🗑️ Bill deleted");
+        fetchBills();
+      } catch (err) {
+        showToast('❌ Error deleting bill');
+      }
+    }
+
+    async function undeleteBill(id) {
+      try {
+        await fetch(`/api/admin/bills/${id}/undelete`, { method: 'PATCH' });
+        showToast("↩️ Bill restored");
+        fetchBills();
+      } catch (err) {
+        showToast('❌ Error restoring bill');
+      }
+    }
+
+    // Load bills when page loads
+    document.addEventListener('DOMContentLoaded', fetchBills);
+  </script>
+</body>
+</html>
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Billing App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+    }
+    .summary-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 30%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .summary-box h2 {
+      margin-bottom: 10px;
+      font-size: 18px;
+      color: #444;
+    }
+    .summary-box p {
+      font-size: 24px;
+      font-weight: bold;
+      color: #222;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+      font-size: 14px;
+    }
+    tr.paid {
+      background-color: #e7ffe7;
+    }
+    tr.unpaid {
+      background-color: #ffe7e7;
+    }
+    tr.deleted {
+      background-color: #fff7d4;
+    }
+    .btn {
+      padding: 6px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-toggle {
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #dc3545;
+      color: white;
+    }
+    .btn-undelete {
+      background-color: #ffc107;
+      color: black;
+    }
+    .item-details {
+      font-size: 13px;
+      color: #333;
+    }
+    #toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: #333;
+        color: #fff;
+        border-radius: 5px;
+        display: none;
+        z-index: 1000;
+      }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel - Today's Bills</h1>
+  <button onclick="window.location.href='admin-archive.html'" style="position: fixed; top: 20px; right: 20px; padding: 10px; z-index: 1000;">
+  Go to Archived Bills
+</button>
+    <div id="toast"></div>
+
+
+  <div class="summary">
+    <div class="summary-box">
+      <h2>Total Sales</h2>
+      <p id="totalSales">₹0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Unpaid Bills</h2>
+      <p id="unpaidStats">0 | ₹0</p>
+    </div>
+    <div class="summary-box">
+      <h2>Deleted Bills</h2>
+      <p id="deletedCount">0</p>
+    </div>
+  </div>
+
+  <table id="billsTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Total</th>
+        <th>Items</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+ 
+  <script>
+     function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.style.display = "block";
+        setTimeout(() => (toast.style.display = "none"), 3000);
+      }
+  // Redirect to login if no token
+  const token = localStorage.getItem('token');
+  // if (!token) window.location.href = 'login.html';
+if (!token) {
+  // Redirect to login with the intended redirect path
+  const currentPath = window.location.pathname;
+  window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+  showToast("Authentication Required lodu")
+}
+
+
+  // Wrap fetch to include token
+  const originalFetch = window.fetch;
+  window.fetch = (url, options = {}) => {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + token;
+    return originalFetch(url, options);
+  };
+
+
+
+
+    async function fetchBills() {
+      try {
+        const res = await fetch('/api/admin/bills/today', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+        const data = await res.json();
+        // console.log(data)
+
+        const tbody = document.querySelector('#billsTable tbody');
+        tbody.innerHTML = '';
+
+        const { bills, summary } = data;
+
+        document.getElementById('totalSales').textContent = '₹' + summary.totalSales;
+        document.getElementById('unpaidStats').textContent = `${summary.unpaidCount} | ₹${summary.unpaidAmount}`;
+        document.getElementById('deletedCount').textContent = summary.deletedCount;
+
+        bills.forEach(bill => {
+          const tr = document.createElement('tr');
+
+          if (bill.deleted) tr.className = 'deleted';
+          else if (bill.payment === 'Paid') tr.className = 'paid';
+          else tr.className = 'unpaid';
+
+          const time = new Date(bill.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const modifiedTime = new Date(bill.updatedAt).toLocaleString('en-IN', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric'
+});
+
+          const itemList = bill.items.map(item =>
+            `<div class="item-details">${item.name} x ${item.quantity} = ₹${item.price * item.quantity}</div>`
+          ).join('');
+
+          tr.innerHTML = `
+            // <td>${time}</td>
+            <td>
+  ${time}<br>
+  <span style="font-size: 12px; color: gray;">Modified: ${modifiedTime}</span>
+</td>
+            <td>${bill.payment}${bill.deleted ? ` (Deleted by ${bill.deletedBy})` : ''}</td>
+            <td>₹${bill.total}</td>
+            <td>${itemList}</td>
+            <td>
+              <button class="btn btn-toggle" onclick="togglePayment('${bill._id}')">Toggle</button>
+              ${bill.deleted
+                ? `<button class="btn btn-undelete" onclick="undeleteBill('${bill._id}')">Undelete</button>`
+                : `<button class="btn btn-delete" onclick="deleteBill('${bill._id}')">Delete</button>`}
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+          // showToast("success")
+        });
+        showToast("Loaded success")
+
+      } catch (err) {
+
+        showToast('Error loading bills');
+      }
+    }
+
+    async function togglePayment(id) {
+      await fetch(`/api/admin/bills/${id}/toggle`, { method: 'PATCH' });
+      fetchBills();
+    }
+
+    async function deleteBill(id) {
+      await fetch(`/api/admin/bills/${id}/delete`, { method: 'PATCH' });
+      fetchBills();
+    }
+
+    async function undeleteBill(id) {
+      await fetch(`/api/admin/bills/${id}/undelete`, { method: 'PATCH' });
+      fetchBills();
+    }
+
+    fetchBills();
+  </script>
+</body>
+</html> -->

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Run Cron</title></head>
+<body>
+  <button onclick="runCron()">Run Cron Manually</button>
+  <p id="output"></p>
+  <script>
+    async function runCron() {
+      const res = await fetch('/api/admin/test-cron', { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('output').textContent = data.message || data.error;
+    }
+  </script>
+</body>
+</html>

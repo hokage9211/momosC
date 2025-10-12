@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Archived Bills - Admin</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --radius: 8px;
+    }
+
+    body { 
+      font-family: 'Inter', 'Segoe UI', sans-serif; 
+      padding: 24px; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .nav-btn.active {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .content {
+      padding: 32px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: var(--gray-50);
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .controls label {
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .controls input {
+      padding: 10px 16px;
+      border: 2px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .controls input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .controls button {
+      padding: 10px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .controls button:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .summary-box {
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      transition: all 0.3s ease;
+    }
+
+    .summary-box:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .summary-box h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: var(--gray-700);
+      font-weight: 600;
+    }
+
+    .summary-box p {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .total-sales { background: linear-gradient(135deg, #dbeafe, #eff6ff); border-color: #bfdbfe; }
+    .deleted-bills { background: linear-gradient(135deg, #fef3c7, #fffbeb); border-color: #fcd34d; }
+    .unpaid-bills { background: linear-gradient(135deg, #fee2e2, #fef2f2); border-color: #fca5a5; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    th {
+      background: var(--gray-50);
+      font-weight: 600;
+      color: var(--gray-700);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: var(--gray-50);
+    }
+
+    .paid { background: #f0fdf4 !important; }
+    .unpaid { background: #fef2f2 !important; }
+    .deleted { background: #fffbeb !important; }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-paid { background: #dcfce7; color: #166534; }
+    .status-unpaid { background: #fee2e2; color: #991b1b; }
+    .status-deleted { background: #fef3c7; color: #92400e; }
+
+    .items-list {
+      max-width: 300px;
+    }
+
+    .item-tag {
+      display: inline-block;
+      background: var(--gray-100);
+      padding: 4px 8px;
+      margin: 2px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 20px;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .summary {
+        grid-template-columns: 1fr;
+      }
+      
+      table {
+        font-size: 14px;
+      }
+      
+      th, td {
+        padding: 12px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📁 Archived Bills Viewer</h1>
+      <div class="navigation">
+        <button class="nav-btn" onclick="window.location.href='admin.html'">📋 Live Bills</button>
+        <button class="nav-btn active" onclick="window.location.href='admin-archive.html'">📁 Archived Bills</button>
+        <button class="nav-btn" onclick="window.location.href='admin-items-report.html'">📊 Archived Item Report</button>
+        <button class="nav-btn" onclick="window.location.href='admin-items-live-report.html'">🔥 Live Item Report</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="controls">
+        <label for="archiveDate"><strong>Select Date:</strong></label>
+        <input type="date" id="archiveDate" />
+        <button onclick="loadArchivedBills()">🔍 Find Bills</button>
+      </div>
+
+      <div class="summary">
+        <div class="summary-box total-sales">
+          <h3>Total Sales</h3>
+          <p id="totalSalesBox">₹0</p>
+        </div>
+        <div class="summary-box deleted-bills">
+          <h3>Deleted Bills</h3>
+          <p id="deletedBox">0</p>
+        </div>
+        <div class="summary-box unpaid-bills">
+          <h3>Unpaid Bills</h3>
+          <p id="unpaidBox">0 (₹0)</p>
+        </div>
+      </div>
+
+      <table id="billsTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Modified</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Deleted</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="6" class="no-data">Select a date to view archived bills</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const currentPath = window.location.pathname;
+      window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+    }
+
+    // Set default date to today
+    document.getElementById('archiveDate').valueAsDate = new Date();
+
+    async function loadArchivedBills() {
+      const date = document.getElementById('archiveDate').value;
+      if (!date) {
+        alert('Please select a date.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/archive?date=${date}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch archived bills');
+        }
+
+        const bills = await res.json();
+        displayArchivedBills(bills);
+        
+      } catch (error) {
+        console.error('Error loading archived bills:', error);
+        alert('Error loading archived bills. Please try again.');
+      }
+    }
+
+    function displayArchivedBills(bills) {
+      const tbody = document.querySelector('#billsTable tbody');
+      tbody.innerHTML = '';
+
+      if (!bills || bills.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="no-data">No bills found for the selected date</td>
+          </tr>
+        `;
+        updateSummary(0, 0, 0, 0);
+        return;
+      }
+
+      let total = 0, deleted = 0, unpaid = 0, unpaidAmount = 0;
+
+      bills.forEach(bill => {
+        const tr = document.createElement('tr');
+        
+        // Set row class based on status
+        if (bill.deleted) {
+          tr.className = 'deleted';
+        } else if (bill.payment === 'Paid') {
+          tr.className = 'paid';
+        } else {
+          tr.className = 'unpaid';
+        }
+
+        const time = new Date(bill.createdAt).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const modifiedTime = new Date(bill.updatedAt).toLocaleString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+
+        // Create items display with tags
+        const itemsHtml = bill.items.map(item => 
+          `<div class="item-tag">${item.name} ×${item.quantity}</div>`
+        ).join('');
+
+        // Status badge
+        let statusBadge = '';
+        if (bill.deleted) {
+          statusBadge = `<span class="status-badge status-deleted">Deleted</span>`;
+        } else if (bill.payment === 'Paid') {
+          statusBadge = `<span class="status-badge status-paid">Paid</span>`;
+        } else {
+          statusBadge = `<span class="status-badge status-unpaid">Unpaid</span>`;
+        }
+
+        tr.innerHTML = `
+          <td>${time}</td>
+          <td>${modifiedTime}</td>
+          <td class="items-list">${itemsHtml}</td>
+          <td><strong>₹${bill.total}</strong></td>
+          <td>${statusBadge}</td>
+          <td>${bill.deleted ? '✅ Yes' : '❌ No'}</td>
+        `;
+
+        tbody.appendChild(tr);
+
+        // Update summary calculations
+        if (!bill.deleted) {
+          total += bill.total;
+          if (bill.payment !== 'Paid') {
+            unpaid++;
+            unpaidAmount += bill.total;
+          }
+        } else {
+          deleted++;
+        }
+      });
+
+      updateSummary(total, deleted, unpaid, unpaidAmount);
+    }
+
+    function updateSummary(total, deleted, unpaid, unpaidAmount) {
+      document.getElementById('totalSalesBox').textContent = `₹${total}`;
+      document.getElementById('deletedBox').textContent = deleted;
+      document.getElementById('unpaidBox').textContent = `${unpaid} (₹${unpaidAmount})`;
+    }
+
+    // Load today's bills by default
+    window.addEventListener('load', () => {
+      // Optionally auto-load today's archived bills
+      // loadArchivedBills();
+    });
+  </script>
+</body>
+</html>
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Archived Bills - Admin</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .summary { display: flex; gap: 20px; margin-bottom: 20px; }
+    .summary div { padding: 10px 20px; border: 1px solid #ccc; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .green { background: #c8facc; }
+    .red { background: #fbcaca; }
+    .yellow { background: #fff7b2; }
+  </style>
+</head>
+<body>
+  <h1>Archived Bills Viewer</h1>
+  <button onclick="window.location.href='admin.html'" style="position: fixed; top: 20px; right: 20px; padding: 10px; z-index: 1000;">
+  Go to Live Bills
+</button>
+
+  <label for="archiveDate">Select Date: </label>
+  <input type="date" id="archiveDate" />
+  <button onclick="loadArchivedBills()">Find</button>
+
+  <div class="summary">
+    <div id="totalSalesBox">Total Sales: ₹0</div>
+    <div id="deletedBox">Deleted Bills: 0</div>
+    <div id="unpaidBox">Unpaid Bills: 0</div>
+  </div>
+
+  <table id="billsTable">
+    <thead>
+  <tr>
+    <th>Time</th>
+    <th>Modified</th>
+    <th>Items</th>
+    <th>Total</th>
+    <th>Status</th>
+    <th>Deleted</th>
+  </tr>
+</thead>
+
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) {
+    const currentPath = window.location.pathname;
+    window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+  }
+
+  async function loadArchivedBills() {
+    const date = document.getElementById('archiveDate').value;
+    if (!date) return alert('Select a date.');
+
+    const res = await fetch(`/api/admin/archive?date=${date}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const bills = await res.json();
+
+    const tbody = document.querySelector('#billsTable tbody');
+    tbody.innerHTML = '';
+
+    let total = 0, deleted = 0, unpaid = 0, unpaidAmount = 0;
+
+    for (const bill of bills) {
+      const tr = document.createElement('tr');
+      tr.className = bill.deleted ? 'yellow' : (bill.payment === 'Paid' ? 'green' : 'red');
+
+      const time = new Date(bill.createdAt).toLocaleTimeString();
+      const items = bill.items.map(item => `${item.name} x${item.quantity}`).join(', ');
+
+      const modifiedTime = new Date(bill.updatedAt).toLocaleString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+
+      tr.innerHTML = `
+        <td>${time}</td>
+        <td>${modifiedTime}</td>
+        <td>${items}</td>
+        <td>₹${bill.total}</td>
+        <td>${bill.payment}</td>
+        <td>${bill.deleted ? 'Yes' : 'No'}</td>
+      `;
+      tbody.appendChild(tr);
+
+      if (!bill.deleted) {
+        total += bill.total;
+        if (bill.payment !== 'Paid') {
+          unpaid++;
+          unpaidAmount += bill.total;
+        }
+      } else {
+        deleted++;
+      }
+    }
+
+    document.getElementById('totalSalesBox').textContent = `Total Sales: ₹${total}`;
+    document.getElementById('deletedBox').textContent = `Deleted Bills: ${deleted}`;
+    document.getElementById('unpaidBox').textContent = `Unpaid Bills: ${unpaid} (₹${unpaidAmount})`;
+  }
+</script>
+
+
+</body>
+</html> -->
